@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Seattle Equity in Mobility</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+<script src='https://api.tiles.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.js'></script>
+<link href='https://api.tiles.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.css' rel='stylesheet' />
+<script src="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.js"></script>
+<script type="text/javascript" src="https://unpkg.com/geojson@0.5.0/geojson.js"></script>
+
+<script type="text/javascript" src="	https://unpkg.com/jquery@3.6.0/dist/jquery.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css" rel="stylesheet" />
+<style>
+	body { margin: 10px; padding: 10px; }
+	#map2 { height: 90vh;
+	width: 100vh;
+	margin-left: auto;
+  margin-right: auto;}
+</style>
+</head>
+<body>
+	<style>
+	#menu {
+	background: #fff;
+	position: absolute;
+	z-index: 1;
+	top: 5px;
+	left: 5px;
+	border-radius: 3px;
+	width: 120px;
+	border: 1px solid rgba(0, 0, 0, 0.4);
+	font-family: 'Open Sans', sans-serif;
+	}
+
+	#menu a {
+	font-size: 13px;
+	color: #404040;
+	display: block;
+	margin: 0;
+	padding: 0;
+	padding: 10px;
+	text-decoration: none;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+	text-align: center;
+	}
+
+	#menu a:last-child {
+	border: none;
+	}
+
+	#menu a:hover {
+	background-color: #f8f8f8;
+	color: #404040;
+	}
+
+	#menu a.active {
+	background-color: #3887be;
+	color: #ffffff;
+	}
+
+	#menu a.active:hover {
+	background: #3074a4;
+	}
+	</style>
+
+
+
+		<!--<h1> Capstone</h1>-->
+		<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.min.js"></script>
+		<link
+			rel="stylesheet"
+			href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.css"
+			type="text/css"/>
+	<script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.min.js"></script>
+
+
+	<div id='map2'</div>
+	<nav id="menu"></nav>
+		<script>
+
+			mapboxgl.accessToken = 'pk.eyJ1Ijoicmdhc2NoZWwiLCJhIjoiY2toY25oNjkzMDQ3ODJyc2I1YWoyczk2bCJ9.pMf2mjeJHvfkdPM7jEAFCg';
+			var map2 = new mapboxgl.Map({
+			 container: 'map2',
+			 style: 'mapbox://styles/rgaschel/ckolqpnyc2x8k17nv44anqc1s',
+			 center: [-122.332069, 47.606209],
+			 zoom: 12,
+
+
+			});
+
+			map2.addControl(
+			new MapboxGeocoder({
+			accessToken: mapboxgl.accessToken,
+			mapboxgl: mapboxgl
+			})
+		);
+	$.getJSON("https://data.lime.bike/api/partners/v1/gbfs/seattle/free_bike_status.json", function(jsonData) {
+
+
+
+		var json = jsonData;
+
+
+		var lime = GeoJSON.parse(json.data.bikes, {
+			Point: ['lat', 'lon']
+		});
+
+		console.log(lime)
+
+
+			 map2.on('load', function(){
+				map2.addSource('lime', {
+							"type": "geojson",
+							"data": lime
+					});
+					map2.addLayer({
+										"id":"Lime",
+										"type":"circle",
+										"source":"lime",
+										"paint": {
+											"circle-color": "#00FF00",
+											"circle-radius": 4
+
+										}
+			});
+
+		});
+		map2.on('click', 'Lime', function (e) {
+			var limevehicleavail;
+
+				if(e.features[0].properties.is_disabled === 1) {
+					limevehicleavail = 'No';
+				} else if(e.features[0].properties.is_reserved === 1)
+				{
+					limevehicleavail = 'No';
+				} else {
+					limevehicleavail = 'Yes';
+				}
+
+				var limevehicletype
+
+				if(e.features[0].properties.vehicle_type == 'scooter') {
+					limevehicletype = 'Scooter'
+				} else {
+					limevehicletype = 'E-bike'
+				}
+					new mapboxgl.Popup()
+					.setLngLat(e.lngLat)
+					.setHTML("<strong> Vechile Type:</strong> " + limevehicletype + '<p>' + "<strong> Is the vehcile available?: </strong> " + limevehicleavail + '<br><br><strong>Mobility Access Details:</strong><p><strong>Qualification:</strong> Individual must demonstrate participation in a local, state or federal public benefits program, show proof of enrollment, such as EBT card, discounted utility bill, or discounted transit fare.</p><p><strong>Benefits:</strong> Five free 30-minute rides per day.  Additional time at 50% off.</p><p><a href="https://www.fountain.com/limebike/apply/united-states-limeaccess" target="_blank" title="Opens in a new window">More Access Info</a></p> <p> <a href="https://www.li.me/" target="blank" title="Opens in a new window">Download the vendor app</a></p>')
+					.addTo(map2);
+					});
+					map2.on('mouseenter', 'Lime', function () {
+					map2.getCanvas().style.cursor = 'pointer';
+					});
+
+					// Change it back to a pointer when it leaves.
+					map2.on('mouseleave', 'Lime', function () {
+					map2.getCanvas().style.cursor = '';
+					});
+
+	});
+
+
+
+	$.getJSON("https://wrangler-mds-production.herokuapp.com/gbfs/Seattle,%20WA/free_bike_status.json", function(jsonData) {
+
+
+			var json = jsonData;
+
+
+			var link = GeoJSON.parse(json.data.bikes, {
+				Point: ['lat', 'lon']
+			});
+
+			console.log(link)
+
+
+				 map2.on('load', function(){
+					map2.addSource('link', {
+								"type": "geojson",
+								"data": link
+						});
+						map2.addLayer({
+											"id":"Link",
+											"type":"circle",
+											"source":"link",
+											"paint": {
+												"circle-color": "#e4fc0a",
+												"circle-radius": 4
+											}
+				});
+
+			});
+			map2.on('click', 'Link', function (e) {
+				var linkvehicleavail;
+
+					if(e.features[0].properties.is_disabled === 1)
+					 {
+						linkvehicleavail = 'No';
+					} else if(e.features[0].properties.is_reserved === 1)
+					{
+						linkvehicleavail = 'No';
+					}
+					else {
+						linkvehicleavail = 'Yes';
+					};
+
+				var linkvehicletype
+
+				if(e.features[0].properties.vehicle_type_id === 1) {
+					linkvehicletype = 'Scooter'
+				} else {
+					linkvehicletype = 'unknown'
+				}
+
+						new mapboxgl.Popup()
+						.setLngLat(e.lngLat)
+						.setHTML("<strong> Vechile Type: </strong> " + linkvehicletype + '<p>' + " <strong> Is the vehcile available?: </strong> " + linkvehicleavail + '<br><br><strong>Mobility Access Details:</strong><p><strong>Qualification:</strong> LINK-Up is available to people enrolled in one or more local, state, or federal assistance program with qualifying documentation.</p><p><strong>Benefits:</strong> Qualifying Seattle riders receive a 95% discount on their local link rides.<br> 1 Hour = $0.98<br> 40 Minutes = $0.65 <br> 20 Minutes or less = No Charge</p><p><a href="https://www.link.city/link-up" target="_blank" title="Opens in a new window">More Access Info</a></p> <p> <a href="https://www.link.city/" target="blank" title="Opens in a new window">Download the vendor app</a></p>')
+						.addTo(map2);
+						});
+						map2.on('mouseenter', 'Link', function () {
+						map2.getCanvas().style.cursor = 'pointer';
+						});
+
+						// Change it back to a pointer when it leaves.
+						map2.on('mouseleave', 'Link', function () {
+						map2.getCanvas().style.cursor = '';
+						});
+
+		});
+
+		$.getJSON("https://seattle-gbfs.getwheelsapp.com/free_bike_status.json", function(jsonData) {
+
+
+				var json = jsonData;
+
+
+				var wheels = GeoJSON.parse(json.data.bikes, {
+					Point: ['lat', 'lon']
+				});
+
+				console.log(wheels)
+
+
+					 map2.on('load', function(){
+						map2.addSource('wheels', {
+									"type": "geojson",
+									"data": wheels
+							});
+							map2.addLayer({
+												"id":"Wheels",
+												"type":"circle",
+												"source":"wheels",
+												"paint": {
+													"circle-color": "black",
+													"circle-radius": 4
+												}
+					});
+
+				});
+				map2.on('click', 'Wheels', function (e) {
+					var wheelsvehicleavail;
+
+						if(e.features[0].properties.is_disabled === 1)
+						 {
+							wheelsvehicleavail = 'No';
+						} else if(e.features[0].properties.is_reserved === 1)
+						{
+							wheelsvehicleavail = 'No';
+						}
+						else {
+							wheelsvehicleavail = 'Yes';
+						}
+
+							new mapboxgl.Popup()
+							.setLngLat(e.lngLat)
+							.setHTML('<strong>' + "Vehicle Type: </strong> Scooter" + '<p>' + "<strong> Is the vehcile available?: </strong> " + wheelsvehicleavail + '<br><br><strong>Mobility Access Details:</strong><p><strong>Qualification:</strong> Individuals must be currently enrolled in a city, state, or federal assistance program such as Medicaid, EBT, SNAP, or a discounted utility bill.</p><p><strong>Benefits:</strong> Rides are discounted at 95% off of the regular fare in Seattle, varies by market agreement.</p><p><a href="https://www.takewheels.com/wheels-for-all/" target="_blank" title="Opens in a new window">More Access Info</a></p> <p> <a href="https://www.takewheels.com/" target="blank" title="Opens in a new window">Download the vendor app</a></p>')
+							.addTo(map2);
+							});
+							map2.on('mouseenter', 'Wheels', function () {
+							map2.getCanvas().style.cursor = 'pointer';
+							});
+
+							// Change it back to a pointer when it leaves.
+							map2.on('mouseleave', 'Wheels', function () {
+							map2.getCanvas().style.cursor = '';
+							});
+
+			});
+
+
+
+	map2.addControl(
+	new mapboxgl.GeolocateControl({
+	positionOptions: {
+	enableHighAccuracy: true
+	},
+	trackUserLocation: true
+	})
+	);
+
+	// After the last frame rendered before the map enters an "idle" state.
+	map2.on('idle', function () {
+	// If these two layers have been added to the style,
+	// add the toggle buttons.
+	if (map2.getLayer('Wheels') && map2.getLayer('Link')&& map2.getLayer('Lime')) {
+	// Enumerate ids of the layers.
+	var toggleableLayerIds = ['Wheels', 'Link','Lime'];
+	// Set up the corresponding toggle button for each layer.
+	for (var i = 0; i < toggleableLayerIds.length; i++) {
+	var id = toggleableLayerIds[i];
+	if (!document.getElementById(id)) {
+	// Create a link.
+	var link = document.createElement('a');
+	link.id = id;
+	link.href = '#';
+	link.textContent = id;
+	link.className = 'active';
+	// Show or hide layer when the toggle is clicked.
+	link.onclick = function (e) {
+	var clickedLayer = this.textContent;
+	e.preventDefault();
+	e.stopPropagation();
+
+	var visibility = map2.getLayoutProperty(
+	clickedLayer,
+	'visibility'
+	);
+
+	// Toggle layer visibility by changing the layout object's visibility property.
+	if (visibility === 'visible') {
+	map2.setLayoutProperty(
+	clickedLayer,
+	'visibility',
+	'none'
+	);
+	this.className = '';
+	} else {
+	this.className = 'active';
+	map2.setLayoutProperty(
+	clickedLayer,
+	'visibility',
+	'visible'
+	);
+	}
+	};
+
+	var layers = document.getElementById('menu');
+	layers.appendChild(link);
+	}
+	}
+	}
+	});
+		</script>
+	</body>
+	</html>
